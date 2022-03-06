@@ -1,0 +1,15 @@
+services:
+  snapshot-scrapper:
+    build: .
+    environment:
+#      This is the base URL for the GraphQL API of Snapshot, or a snapshot clone if one appears
+      - BASE_URL=https://hub.snapshot.org/graphql
+#      Uncomment this line to change the default outpath for this image
+#      This should not be changed without changing the volumes parameters below
+#      And should not really be changed for any rational reason
+#      - OUTPATH=/path/to/results
+#      Uncomment and change this line from None to a space ID (example space.eth) to restrict the scrapper to only one space
+#      - SPACE_ID=None
+    volumes:
+#      This is the volume mapping for the results so that they are stored outside the docker container
+      - ./results:/results
