@@ -45,7 +45,7 @@ class PoapScrapper:
             os.getcwd(), dir_to_export_to, f"{filename_without_extension}.json"
         )
         if os.path.exists(final_path):
-            print("This file already exists ;).")
+            print(f"The file {final_path} already exists ;).")
         else:
             with open(final_path, "w") as outfile:
                 json.dump(content_to_export, outfile)
