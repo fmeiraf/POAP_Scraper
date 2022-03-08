@@ -1,0 +1,3 @@
+poap_api: "https://api.poap.xyz/events"
+eth_subgraph: "https://api.thegraph.com/subgraphs/name/poap-xyz/poap"
+gchain_subgraph: "https://api.thegraph.com/subgraphs/name/poap-xyz/poap-xdai"
