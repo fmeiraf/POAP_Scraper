@@ -18,15 +18,39 @@ def extract_token_nested_fields(target_obj: dict):
     return new_dict
 
 
-def extract_all_tokens_from_subgraph(query: str, subgraph_api_url: str, page_size: int):
+def extract_all_tokens_from_subgraph(subgraph_api_url: str, page_size: int):
 
     """
     Extract all token data from subgraph.
     """
+
     last_token_id = 0
     wait_time_seconds = 5
     pages_ran = 0
     extracted_data = []
+
+    query = """
+            query get_token($last_token: Int, $page_size: Int) {
+                tokens (first: $page_size, 
+                        orderBy:id,
+                        orderDirection: asc,
+                        where: {id_gt: $last_token}) 
+                {
+                    id
+                    owner{
+                        id
+                    }
+                    event {
+                        id
+                        tokenCount
+                        created
+                        transferCount
+                    }
+                    created
+                    transferCount
+                }
+            }
+        """
 
     print("Starting subgraph extraction..")
     while True:
