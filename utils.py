@@ -2,6 +2,8 @@ import requests
 import time
 import json
 
+import pdb
+
 
 def extract_token_nested_fields(target_obj: dict):
     """
@@ -18,23 +20,27 @@ def extract_token_nested_fields(target_obj: dict):
     return new_dict
 
 
-def extract_all_tokens_from_subgraph(subgraph_api_url: str, page_size: int):
+def extract_all_tokens_from_subgraph(
+    subgraph_api_url: str, page_size: int, last_timestamp: int = 0
+):
 
     """
     Extract all token data from subgraph.
     """
 
-    last_token_id = 0
+    last_timestamp = last_timestamp
     wait_time_seconds = 5
     pages_ran = 0
     extracted_data = []
 
+    # pdb.set_trace()
+
     query = """
-            query get_token($last_token: Int, $page_size: Int) {
+            query get_token($last_timestamp: Int, $page_size: Int) {
                 tokens (first: $page_size, 
                         orderBy:id,
                         orderDirection: asc,
-                        where: {id_gt: $last_token}) 
+                        where: {created_gt: $last_timestamp}) 
                 {
                     id
                     owner{
@@ -59,13 +65,13 @@ def extract_all_tokens_from_subgraph(subgraph_api_url: str, page_size: int):
             subgraph_api_url,
             json={
                 "query": query,
-                "variables": {"last_token": last_token_id, "page_size": page_size},
+                "variables": {"last_timestamp": last_timestamp, "page_size": page_size},
             },
         )
 
         if req.status_code != 200:
             print(
-                f"There was a problem with the request for last_token:{last_token_id}.\n Trying again in {wait_time_seconds}  seconds.. "
+                f"There was a problem with the request for last_timestamp:{last_timestamp}.\n Trying again in {wait_time_seconds}  seconds.. "
             )
             time.sleep(wait_time_seconds)
             continue
@@ -79,6 +85,6 @@ def extract_all_tokens_from_subgraph(subgraph_api_url: str, page_size: int):
         for token_data in j["data"]["tokens"]:
             cleaned_token_data = extract_token_nested_fields(token_data)
             extracted_data.append(cleaned_token_data)
-            last_token_id = int(cleaned_token_data["token_id"])
+            last_timestamp = int(cleaned_token_data["token_created"])
 
         pages_ran += 1
