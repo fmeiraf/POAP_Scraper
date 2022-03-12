@@ -1,5 +1,5 @@
 services:
-  snapshot-scrapper:
+  poap-scrapper:
     build: .
     environment:
 #      This is the base URL for the GraphQL API of Snapshot, or a snapshot clone if one appears
@@ -12,4 +12,4 @@ services:
 #      - SPACE_ID=None
     volumes:
 #      This is the volume mapping for the results so that they are stored outside the docker container
-      - ./results:/results
+      - ./results:/scraper/results

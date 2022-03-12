@@ -1,17 +1,22 @@
 FROM python:3.8
 
-ENV BASEURL=https://hub.snapshot.org/graphql
-ENV OUTPATH=/results
-ENV SPACE_ID=None
+ENV OUTPATH=results
 
-RUN pip install gql[all]
-RUN pip install tqdm
+RUN pip install pandas
+RUN pip install pyyaml
+RUN pip install requests
+
+
 
 RUN mkdir /scrapper
 RUN mkdir /results
+
 WORKDIR /scrapper
 
-COPY ./SnapshotScrapper.py /scrapper/SnapshotScrapper.py
+# COPY ./PoapScrapper.py /scrapper/PoapScrapper.py
+# COPY ./parameters.yaml /scrapper/parameters.yaml
+# COPY ./results /scrapper/results
+COPY . /scrapper
 
-CMD python SnapshotScrapper.py -b $BASEURL -o $OUTPATH -s $SPACE_ID
+CMD python PoapScrapper.py -o $OUTPATH -c
 
