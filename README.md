@@ -19,6 +19,10 @@ Arguments:
       Enables the checkpoint system.
 ```
 
+### Parameters
+
+For subgraph urls and the POAP event API you can check the `parameters.yaml` file.
+
 ### The checkpoint system
 
 Thinking about programatic applications for this scrapper, there is the option of running this script using checkpoints. Checkpoints are **always** generated after you run the script and it stores the latest timestamp (_for the last token_id scrapped_) in a json file: `/results/checkpoints.json`.
