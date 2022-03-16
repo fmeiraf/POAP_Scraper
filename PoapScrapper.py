@@ -269,17 +269,6 @@ class PoapScrapper:
 
 
 def main():
-
-    # getting links from parameters.yaml
-    parameters_file = os.path.join(os.getcwd(), "parameters.yaml")
-    if not os.path.exists(parameters_file):
-        raise OSError(
-            "You should have a yaml file on your root directory called parameters.yaml! Check the README for more info"
-        )
-
-    with open(parameters_file) as file:
-        parameters = yaml.load(file, Loader=yaml.FullLoader)
-
     parser = argparse.ArgumentParser(description="POAP Scrapper.")
     parser.add_argument(
         "-o",
@@ -290,6 +279,14 @@ def main():
         help="The location for the folder containing the result of the scrapping.",
     )
     parser.add_argument(
+        "-p",
+        "--params",
+        metavar="parameters_file",
+        type=str,
+        required=False,
+        help="The name for the parameters file.",
+    )
+    parser.add_argument(
         "-c",
         "--checkpoints",
         action="store_true",
@@ -297,6 +294,20 @@ def main():
     )
 
     args = parser.parse_args()
+
+    # checking parameter_file field
+    if args.params:
+        params_file_name = args.params
+    else:
+        params_file_name = "parameters.yaml"
+
+    # getting links from parameters.yaml
+    parameters_file = os.path.join(os.getcwd(), params_file_name)
+    if not os.path.exists(parameters_file):
+        raise OSError("Parameters file doesn't exist! Check the README for more info")
+
+    with open(parameters_file) as file:
+        parameters = yaml.load(file, Loader=yaml.FullLoader)
 
     # initializing and executing scrapper
     scrapper = PoapScrapper(
