@@ -15,13 +15,23 @@ Arguments:
   -h, --help            show this help message and exit
   -o out_path, --out out_path
                   The location for the folder containing the result of the scrapping.
+  -p, --params parameters_file
+                  The name for the parameter file like 'parameters.yaml'
   -c ,
       Enables the checkpoint system.
 ```
 
 ### Parameters
 
-For subgraph urls and the POAP event API you can check the `parameters.yaml` file.
+For subgraphs and the POAP event API urls you can set them using a .yaml file. If you want to set a new file you can use the `-p` flag. In case you don't use this flag, the script will assume you have a parameter file called `parameters.yaml` in the root directory.
+
+File strucuture:
+
+```
+poap_api: "EVENT_API_URL"
+eth_subgraph: "ETHEREUM_SUBGRAPH_URL"
+gchain_subgraph: "GNOSIS_CHAIN_SUBGRAPH_URL"
+```
 
 ### The checkpoint system
 
