@@ -3,9 +3,9 @@ import requests
 import yaml
 import os
 import json
-import utils
 import argparse
 import math
+import time
 
 
 class PoapScrapper:
@@ -56,17 +56,29 @@ class PoapScrapper:
 
         # getting data from subgraphs
         print("Getting ethereum POAP mainnet subgraph data.")
-        eth_token_data = utils.extract_all_tokens_from_subgraph(
+        # eth_token_data = utils.extract_all_tokens_from_subgraph(
+        #     subgraph_api_url=self.eth_graph_url,
+        #     page_size=page_size,
+        #     last_timestamp=ethereum_last_timestamp,
+        # )
+        eth_token_data = self.extract_token_data(
             subgraph_api_url=self.eth_graph_url,
             page_size=page_size,
-            last_timestamp=ethereum_last_timestamp,
+            last_timestamp_used=ethereum_last_timestamp,
+            data=[],
         )
 
         print("Getting POAP gnosis chain subgraph data.")
-        gchain_token_data = utils.extract_all_tokens_from_subgraph(
+        # gchain_token_data = utils.extract_all_tokens_from_subgraph(
+        #     subgraph_api_url=self.gchain_graph_url,
+        #     page_size=page_size,
+        #     last_timestamp=gnosis_last_timestamp,
+        # )
+        gchain_token_data = self.extract_token_data(
             subgraph_api_url=self.gchain_graph_url,
             page_size=page_size,
-            last_timestamp=gnosis_last_timestamp,
+            last_timestamp_used=gnosis_last_timestamp,
+            data=[],
         )
 
         # consolidating data and saving the results
@@ -99,8 +111,6 @@ class PoapScrapper:
         max_gnosis_timestamp = token_data.loc[
             token_data.chain == "gnosis_chain", "token_created"
         ].max()
-
-        # pdb.set_trace()
 
         checkpoint_obj["ethereum"] = (
             int(max_eth_timestamp)
@@ -137,6 +147,111 @@ class PoapScrapper:
         )
 
         print("Event data gathering is DONE. \n")
+
+    def extract_token_data(
+        self,
+        subgraph_api_url: str,
+        page_size: int,
+        last_timestamp_used: int = 0,
+        data: list = [],
+        wait_time_seconds: int = 5,
+    ):
+        """
+        Extract all token data from subgraph.
+        """
+
+        try:
+            last_timestamp = last_timestamp_used
+
+            query = """
+                    query get_token($last_timestamp: Int, $page_size: Int) {
+                        tokens (first: $page_size, 
+                                orderBy:id,
+                                orderDirection: asc,
+                                where: {created_gt: $last_timestamp}) 
+                        {
+                            id
+                            owner{
+                                id
+                            }
+                            event {
+                                id
+                                tokenCount
+                                created
+                                transferCount
+                            }
+                            created
+                            transferCount
+                        }
+                    }
+                """
+
+            req = requests.post(
+                subgraph_api_url,
+                json={
+                    "query": query,
+                    "variables": {
+                        "last_timestamp": last_timestamp,
+                        "page_size": page_size,
+                    },
+                },
+            )
+
+            if req.status_code != 200:
+                print(
+                    f"There was a problem with the request for last_timestamp:{last_timestamp}.\n Trying again in {wait_time_seconds}  seconds.. "
+                )
+                time.sleep(wait_time_seconds)
+                self.extract_token_data(
+                    subgraph_api_url=subgraph_api_url,
+                    page_size=page_size,
+                    last_timestamp_used=last_timestamp,
+                    data=data,
+                    wait_time_seconds=wait_time_seconds,
+                )
+
+            j = json.loads(req.text)
+
+            if not j["data"]["tokens"]:
+                print("Subgraph extraction is DONE. \n")
+                return data
+
+            for token_data in j["data"]["tokens"]:
+                cleaned_token_data = self.extract_token_nested_fields(token_data)
+                data.append(cleaned_token_data)
+                last_timestamp = int(cleaned_token_data["token_created"])
+
+            return self.extract_token_data(
+                subgraph_api_url=subgraph_api_url,
+                page_size=page_size,
+                last_timestamp_used=last_timestamp,
+                data=data,
+                wait_time_seconds=wait_time_seconds,
+            )
+        except Exception as e:
+            print(f"Caught following error during execution: {e} \n")
+            print(f"New attempt in {wait_time_seconds} seconds..")
+            return self.extract_token_data(
+                subgraph_api_url=subgraph_api_url,
+                page_size=page_size,
+                last_timestamp_used=last_timestamp,
+                data=data,
+                wait_time_seconds=wait_time_seconds,
+            )
+
+    def extract_token_nested_fields(self, target_obj: dict):
+        """
+        Extract nested objects from the token graphql query
+        """
+        new_dict = {}
+        for key in target_obj.keys():
+            if key in ["event", "owner"]:
+                for nested_key in target_obj[key].keys():
+                    new_dict[f"{key}_{nested_key}"] = target_obj[key][nested_key]
+            else:
+                new_dict[f"token_{key}"] = target_obj[key]
+
+        return new_dict
 
     def export_to_json_file(
         self,
